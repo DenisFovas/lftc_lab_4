@@ -3,3 +3,4 @@
 # Flatten a list twice -> [[[]]] turns into [].
 def flatten2(flattenableList):
   return sum(sum(flattenableList, []), [])
+

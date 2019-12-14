@@ -16,6 +16,7 @@ annotatedGrammar = grammar.addDetails(inGrammar)
 
 print('Generated an enriched grammar from the input grammar: ' + str(annotatedGrammar) + '.')
 
-parsingTable = grammar.createParsingTableLL1(annotatedGrammar)
+(firstX, followX) = grammar.createParsingTableLL1(annotatedGrammar)
 
-print('Generated a parsing table from the input grammar: ' + str(parsingTable) + '.')
+print('Generated the First(X) set from the grammar: "' + str(firstX) + '".')
+print('Generated the Follow(X) set from the grammar: "' + str(followX) + '".')

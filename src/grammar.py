@@ -36,15 +36,6 @@ def createParsingTableLL1(enrichedGrammar):
 
   return (firstX, followX)
 
-# Rules to compute FIRST set:
-#
-# If x is a terminal, then FIRST(x) = { ‘x’ }
-# If X-> Є, is a production rule, then add Є to FIRST(X).
-# If X->Y1 Y2 Y3...Yn is a production,
-#     FIRST(X) = FIRST(Y1)
-#     If FIRST(Y1) contains Є then FIRST(X) = { FIRST(Y1) – Є } U { FIRST(Y2) }
-#     If FIRST (Yi) contains Є for all i = 1 to n, then add Є to FIRST(X).
-
 # Computes the First(X) set for the grammar.
 def computeFirstXSet(enrichedGrammar):
   nonterminals = enrichedGrammar['nonterminals']
@@ -105,16 +96,6 @@ def computeFirstXForNonTerminal(nonterminal, firstXTable, enrichedGrammar):
 
   firstXTable[nonterminal] = firstX
 
-# If a Non-Terminal on the R.H.S. of any production is followed immediately by a Terminal,
-#   then it can immediately be included in the Follow set of that Non-Terminal.
-# If a Non-Terminal on the R.H.S. of any production is followed immediately by a Non-Terminal,
-#   then the First Set of that new Non-Terminal gets included on the follow set of our original Non-Terminal.
-#   In case encountered an epsilon, then move on to the next symbol in the production.
-# Note : ε is never included in the Follow set of any Non-Terminal.
-# If reached the end of a production while calculating follow,
-#   then the Follow set of that non-teminal will include the Follow set of the Non-Terminal
-#   on the L.H.S. of that production. This can easily be implemented by recursion.
-
 # Given a grammar and the First(X) set, construct the Follow(X) set.
 def computeFollowXSet(enrichedGrammar, firstXTable):
   productions = enrichedGrammar['productions']
@@ -123,10 +104,53 @@ def computeFollowXSet(enrichedGrammar, firstXTable):
   terminals = enrichedGrammar['terminals']
 
   followXTable = {}
-  followXTable[startSymbol] = set(["$"])
 
-  for production in productions:
-    lastIndex = len(production) - 1
+  for nonterminal in nonterminals:
+    followXTable[nonterminal] = set()
 
-    for symbolIndex in range(lastIndex + 1):
-      pass
+  followXTable[startSymbol].add("$")
+
+  hasChanged = True
+
+  while hasChanged:
+    hasChanged = False
+
+    for nonterminal in productions.keys():
+      for production in productions[nonterminal]:
+        lastIndex = len(production) - 1
+
+        for symbolIndex in range(lastIndex + 1):
+          symbol = production[symbolIndex]
+
+          if symbol in nonterminals:
+            if symbolIndex == lastIndex:
+              hasChanged = addAllIntoFromExceptEpsilon(followXTable[symbol], followXTable[nonterminal], hasChanged)
+              hasChanged = addAllIntoFromExceptEpsilon(followXTable[nonterminal], followXTable[symbol], hasChanged)
+            else:
+              foundNonEpsilon = False
+
+              for followingIndex in range(symbolIndex + 1, lastIndex + 1):
+                followingSymbol = production[followingIndex]
+
+                hasChanged = addAllIntoFromExceptEpsilon(followXTable[symbol], firstXTable[followingSymbol], hasChanged)
+
+                if epsilon() not in followXTable[symbol]:
+                  foundNonEpsilon = True
+                  break
+
+                followXTable[symbol].remove(epsilon())
+              
+              if not foundNonEpsilon:
+                hasChanged = addAllIntoFromExceptEpsilon(followXTable[symbol], followXTable[nonterminal], hasChanged)
+
+  return followXTable
+
+def addAllIntoFromExceptEpsilon(addInto, addFrom, hasChanged):
+  changed = False
+
+  for item in addFrom:
+    if item not in addInto:
+      changed = changed or item is not epsilon()
+      addInto.add(item)
+
+  return hasChanged or changed
