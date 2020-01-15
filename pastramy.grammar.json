@@ -1,0 +1,11 @@
+{
+    "startSymbol": "program",
+    "productions": {
+        "program": [
+            "stmt"
+        ],
+        "stmt": [
+            
+        ]
+    }
+}  
